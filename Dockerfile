@@ -27,4 +27,5 @@ COPY . /app
 RUN mkdir -p /data && chmod 777 /data
 
 # 6. 核心：启动时进入 /data 目录执行脚本
-CMD ["sh", "-c", "cd /data && python /app/main.py"]
+CMD ["sh", "-c", "cp -r /app/. /tmp/ && cd /tmp && python /tmp/main.py"]
+
