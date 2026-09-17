@@ -23,9 +23,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 4. 拷贝完整项目代码
 COPY . /app
 
-# 5. 赋予 /app 下所有脚本和可执行文件执行权限 (+x)
-RUN chmod -R +x /app
+# 5. 创建 /data 挂载点目录并赋权
+RUN mkdir -p /data && chmod 777 /data
 
-# 6. 默认入口（在启动容器时可随时覆盖）
-# CMD ["python", "main.py"]
-CMD ["sh", "-c", "cp -r /app/. /tmp/ && cd /tmp && python main.py"]
+# 6. 核心：启动时进入 /data 目录执行脚本
+CMD ["sh", "-c", "cd /data && python /app/main.py"]
