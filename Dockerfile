@@ -27,4 +27,5 @@ COPY . /app
 RUN chmod -R +x /app
 
 # 6. 默认入口（在启动容器时可随时覆盖）
-CMD ["python", "main.py"]
+# CMD ["python", "main.py"]
+CMD ["sh", "-c", "cp -r /app/. /tmp/ && cd /tmp && python main.py"]
