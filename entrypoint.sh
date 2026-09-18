@@ -1,12 +1,9 @@
 #!/bin/sh
 set -e
 
-echo ">> 启动 Dropbear SSH 服务 (监听 22222)..."
-# -E: 日志直接输出到终端
-# -F: 前台模式（通过 & 挂后台守护）
-# -p: 指定高位端口 22222
-# -P: 指定 PID 文件写入唯一可读写的内存盘 /tmp（防止只读报错）
-/usr/sbin/dropbear -E -F -p 22222 -P /tmp/dropbear.pid &
+echo ">> 启动 Dropbear SSH 服务 (加载 LD_PRELOAD 兼容层)..."
+# 注入 libfix.so 绕过 setgroups 拦截
+LD_PRELOAD=/lib/libfix.so /usr/sbin/dropbear -E -F -p 22222 -P /tmp/dropbear.pid &
 
 sleep 1
 if ! pgrep dropbear > /dev/null; then
