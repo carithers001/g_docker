@@ -11,12 +11,12 @@ echo ">> 正在启动 OpenSSH 服务..."
 /usr/sbin/sshd -o "PidFile=/tmp/sshd.pid"
 
 # 读取 Cloudflare Token 并运行
-TOKEN="${ENV_TONE:-$TUNNEL_TOKEN}"
+CCC_TOKEN="${ENV_TOKEN:-$TUNNEL_TOKEN}"
 
-if [ -z "$TOKEN" ]; then
+if [ -z "$CCC_TOKEN" ]; then
     echo ">> [ERROR] 未检测到 ENV_TONE 环境变量，cloudflared 无法启动！"
     exec tail -f /dev/null
 else
     echo ">> 启动 Cloudflare Tunnel..."
-    exec /usr/local/bin/cloudflared tunnel --no-autoupdate run --token "$TOKEN"
+    exec /usr/local/bin/cloudflared tunnel --no-autoupdate run --token "$CCC_TOKEN"
 fi
