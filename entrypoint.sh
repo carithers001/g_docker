@@ -19,17 +19,6 @@ if [ -z "$CCC_TOKEN" ]; then
     exit 1
 fi
 
-:'
-# 心跳保活逻辑
-(
-    while true; do
-        curl -s -m 5 https://1.1.1.1 > /dev/null 2>&1 || true
-        sleep 300
-    done
-) &
-'
-
-
 # 启动 x-tunnel 进程
 if [ -z "$XXX_TOKEN" ]; then
     /app/x-tunnel-linux -l ws://127.0.0.1:$WSPORT &
