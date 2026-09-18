@@ -1,41 +1,38 @@
-FROM debian:bookworm-slim
+FROM alpine:latest
 
-# 安装依赖
-RUN apt-get update && apt-get install -y \
-    curl \
-    screen \
-    lsof \
-	ca-certificates \
-    busybox \
-    --no-install-recommends && \
-    rm -rf /var/lib/apt/lists/*
+# 设置非交互环境变量
+ENV DEBIAN_FRONTEND=noninteractive
 
-WORKDIR /app
+# 1. 安装 OpenSSH、curl、bash、ca-certificates 等基础组件并清理缓存
+RUN apk add --no-cache \
+        openssh-server \
+        openssh-sftp-server \
+        curl \
+        bash \
+        ca-certificates \
+    && rm -rf /var/cache/apk/*
 
-# 根据架构下载二进制（构建时决定）
-ARG TARGETARCH
-RUN case "${TARGETARCH}" in \
-      amd64) \
-        curl -L https://www.baipiao.eu.org/xtunnel/x-tunnel-linux-amd64 -o x-tunnel-linux && \
-        curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o cloudflared-linux \
-        ;; \
-      386) \
-        curl -L https://www.baipiao.eu.org/xtunnel/x-tunnel-linux-386 -o x-tunnel-linux && \
-        curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-386 -o cloudflared-linux \
-        ;; \
-      arm64) \
-        curl -L https://www.baipiao.eu.org/xtunnel/x-tunnel-linux-arm64 -o x-tunnel-linux && \
-        curl -L https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-arm64 -o cloudflared-linux \
-        ;; \
-      *) echo "不支持的架构: ${TARGETARCH}" && exit 1 ;; \
+# 2. 根据系统架构自动拉取静态编译的官方 cloudflared 二进制文件（体积最小、无需多余动态库依赖）
+RUN ARCH=$(uname -m) && \
+    case "${ARCH}" in \
+        x86_64)  CF_ARCH="amd64" ;; \
+        aarch64) CF_ARCH="arm64" ;; \
+        armv7l)  CF_ARCH="arm" ;; \
+        *) echo "Unsupported architecture: ${ARCH}" && exit 1 ;; \
     esac && \
-    chmod +x x-tunnel-linux cloudflared-linux
+    curl -fsSL "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${CF_ARCH}" -o /usr/local/bin/cloudflared && \
+    chmod +x /usr/local/bin/cloudflared
 
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
+# 3. 基础 SSHD 配置：允许 root 密码登录并预留运行所需运行时目录
+RUN mkdir -p /var/run/sshd /root/.ssh && \
+    sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
+    sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
 
-# 环境变量（默认值）
-ENV TOKEN=""
-ENV IPV="4"
+# 4. 复制启动引导脚本
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-ENTRYPOINT ["/app/entrypoint.sh"]
+# 暴露 SSH 端口（内部监听）
+EXPOSE 22
+
+ENTRYPOINT ["/entrypoint.sh"]
