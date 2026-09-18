@@ -18,7 +18,7 @@ RUN ssh-keygen -A && \
     echo "root:alpine123" | chpasswd
 
 # 关键：端口改为 2222（绕过特权端口限制），PidFile 写入 /tmp
-RUN sed -i 's/#Port 22/Port 2222/' /etc/ssh/sshd_config && \
+RUN sed -i 's/#Port 22/Port 22222/' /etc/ssh/sshd_config && \
     sed -i 's/#PermitRootLogin prohibit-password/PermitRootLogin yes/' /etc/ssh/sshd_config && \
     sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config && \
     echo "PidFile /tmp/sshd.pid" >> /etc/ssh/sshd_config
