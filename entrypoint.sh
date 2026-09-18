@@ -18,7 +18,6 @@ UPTIME_PORT="${PORT:-8080}"
 
 # 2. x-tunnel 本地内部使用的真实端口换为 8081，避免和健康检查端口冲突
 WSPORT=8081
-HEALTH_PORT=8082
 
 # 心跳保活逻辑
 (
@@ -44,11 +43,9 @@ sleep 1
     --edge-ip-version "$IPV" \
     --protocol http2 \
     --no-autoupdate \
-    --metrics "0.0.0.0:$HEALTH_PORT" \
     tunnel run --token "$CCC_TOKEN" &
 
 echo "========================================"
-echo "当前健康检查端口: $HEALTH_PORT"
 echo "当前本地服务端口: $WSPORT"
 echo "========================================"
 
