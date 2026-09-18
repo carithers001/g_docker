@@ -1,9 +1,17 @@
 #!/bin/sh
 set -e
 
-echo ">> 启动 OpenSSH 服务..."
-# -e 强制将 sshd 的错误输出重定向到控制台，不再静默沉没
-/usr/sbin/sshd -e
+echo ">> 启动 OpenSSH 服务 (监听 22222)..."
+# -D 阻止后台脱离，-e 将错误直接打印到控制台，& 挂入后台
+/usr/sbin/sshd -D -e &
+
+# 等待 1 秒检查进程是否存活
+sleep 1
+if ! pgrep sshd > /dev/null; then
+    echo ">> [FATAL] sshd 启动失败！请检查上方报错。"
+    exit 1
+fi
+echo ">> sshd 已成功运行并监听 22222 端口！"
 
 CCC_TOKEN="${ENV_TOKEN:-$TUNNEL_TOKEN}"
 if [ -z "$CCC_TOKEN" ]; then
