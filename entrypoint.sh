@@ -6,19 +6,20 @@ if [ "$IPV" != "4" ] && [ "$IPV" != "6" ]; then
     exit 1
 fi
 
-# 检查是否配置了 CCC_TOKEN 环境变量
-CCC_TOKEN="${envToken:-${CCC_TOKEN:-${token:-${TOKEN:-}}}}"
+# 检查是否配置了环境变量
+CCC_TOKEN="${envToken:-${ENV_TOKEN:-${token:-${TOKEN:-}}}}"
+XXX_TOKEN="${xxx:-${XXX_TOKEN:-${token:-${TOKEN:-}}}}"
+# 1. 设置给云平台健康检查用的对外端口 (通常平台会自动分配 PORT 变量，默认 8080)
+UPTIME_PORT="${PORT:-8080}"
+# 2. x-tunnel 本地内部使用的真实端口换为 8081，避免和健康检查端口冲突
+WSPORT=8081
+
 if [ -z "$CCC_TOKEN" ]; then
     echo "[-] 致命错误: 未检测到环境变量 CCC_TOKEN！请在云平台设置该变量。"
     exit 1
 fi
 
-# 1. 设置给云平台健康检查用的对外端口 (通常平台会自动分配 PORT 变量，默认 8080)
-UPTIME_PORT="${PORT:-8080}"
-
-# 2. x-tunnel 本地内部使用的真实端口换为 8081，避免和健康检查端口冲突
-WSPORT=8081
-
+:'
 # 心跳保活逻辑
 (
     while true; do
@@ -26,15 +27,17 @@ WSPORT=8081
         sleep 300
     done
 ) &
+'
 
-echo "[x-tunnel] 启动在本地端口 $WSPORT ..."
 
 # 启动 x-tunnel 进程
-if [ -z "$TOKEN" ]; then
+if [ -z "$XXX_TOKEN" ]; then
     /app/x-tunnel-linux -l ws://127.0.0.1:$WSPORT &
 else
-    /app/x-tunnel-linux -l ws://127.0.0.1:$WSPORT -token "$TOKEN" &
+    /app/x-tunnel-linux -l ws://127.0.0.1:$WSPORT -token "$XXX_TOKEN" &
 fi
+
+echo "[xxx] : $WSPORT ..."
 
 sleep 1
 
@@ -54,9 +57,9 @@ START_TIME=$(date +%s)
 START_DATE=$(date "+%Y-%m-%d %H:%M:%S")
 mkdir -p /tmp/www
 
-# 后台循环：每 5 秒更新一次 index.html
+# 后台循环：每 () 秒更新一次 index.html
 (
-    sleep 3
+    sleep 5
     rm -f /app/x-tunnel-linux /app/cloudflared-linux
 
     while true; do
