@@ -100,6 +100,7 @@ EOF
 busybox httpd -f -p $UPTIME_PORT -h /tmp/www &
 
 # ================= 指定时间定时重启逻辑 (每天 04:00) =================
+if [ "$AUTO_RESTART" ]; then
 (
     # 1. 设置为你所在的时区（Asia/Shanghai 代表北京/香港时间）
     export TZ="Asia/Shanghai" 
@@ -127,6 +128,7 @@ busybox httpd -f -p $UPTIME_PORT -h /tmp/www &
     echo "[定时任务] 到达设定时间，主动触发系统重启..."
     kill -TERM $$  # 杀死主进程触发重启
 ) &
+fi
 
 # 4. 监听后台进程。任何一个后台进程 (x-tunnel 或 cloudflared) 崩溃，容器就会主动退出，触发云平台自动重启
 wait -n
